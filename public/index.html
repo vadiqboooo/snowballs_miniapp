@@ -85,12 +85,22 @@
                         console.warn('Не удалось добавить GLTFLoader в THREE:', e.message);
                     }
                     
-                    // Всегда сохраняем в window
+                    // Всегда сохраняем в window (несколько способов для надежности)
                     window.GLTFLoader = GLTFLoader;
+                    window['GLTFLoader'] = GLTFLoader; // Альтернативный способ
+                    if (typeof window.THREE !== 'undefined') {
+                        try {
+                            window.THREE.GLTFLoader = GLTFLoader;
+                        } catch (e) {
+                            // Игнорируем ошибку, если THREE заморожен
+                        }
+                    }
                     console.log('✓ GLTFLoader установлен в window.GLTFLoader');
-                    console.log('Проверка:', {
+                    console.log('Проверка сразу после установки:', {
                         'window.GLTFLoader': typeof window.GLTFLoader,
-                        'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader
+                        'window["GLTFLoader"]': typeof window['GLTFLoader'],
+                        'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader,
+                        'прямая проверка': window.GLTFLoader !== undefined
                     });
                 } else {
                     console.error('GLTFLoader не найден в модуле!', gltfModule);
@@ -106,29 +116,26 @@
                     'window.gltfLoaderLoaded': window.gltfLoaderLoaded
                 });
                 
-                // Небольшая задержка перед запуском приложения, чтобы убедиться, что все установлено
-                setTimeout(() => {
-                    console.log('Запуск приложения...', {
-                        'window.GLTFLoader': typeof window.GLTFLoader,
-                        'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader
-                    });
-                    
-                    // Запускаем приложение после загрузки
-                    if (window.startApp) {
-                        window.startApp();
-                    } else {
-                        const checkStartApp = setInterval(() => {
-                            if (window.startApp) {
-                                clearInterval(checkStartApp);
-                                window.startApp();
-                            }
-                        }, 100);
-                        setTimeout(() => {
+                console.log('Запуск приложения сразу после загрузки GLTFLoader...');
+                
+                // Запускаем приложение сразу после загрузки GLTFLoader
+                // Ждем только определения функции startApp
+                if (window.startApp) {
+                    window.startApp();
+                } else {
+                    console.log('startApp еще не определен, ждем...');
+                    let attempts = 0;
+                    const checkStartApp = setInterval(() => {
+                        if (window.startApp) {
                             clearInterval(checkStartApp);
-                            if (window.startApp) window.startApp();
-                        }, 5000);
-                    }
-                }, 100);
+                            console.log('startApp определен, запускаем...');
+                            window.startApp();
+                        } else if (attempts++ > 50) {
+                            clearInterval(checkStartApp);
+                            console.error('startApp так и не был определен');
+                        }
+                    }, 100);
+                }
             } catch (error) {
                 console.error('Ошибка загрузки GLTFLoader:', error);
                 console.error('Детали:', error.message, error.stack);

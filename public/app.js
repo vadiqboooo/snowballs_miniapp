@@ -299,9 +299,39 @@ async function createCharacterModel() {
         return;
     }
 
+    // Если gltfLoaderLoaded установлен, но GLTFLoader еще не доступен, ждем немного
+    if (window.gltfLoaderLoaded) {
+        // Даже если gltfLoaderLoaded установлен, даем время на установку window.GLTFLoader
+        let waitAttempts = 0;
+        while (typeof window.GLTFLoader === 'undefined' && waitAttempts < 10) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waitAttempts++;
+        }
+        if (waitAttempts > 0) {
+            console.log(`Ожидали установку window.GLTFLoader ${waitAttempts} раз(а)`);
+        }
+    }
+    
     // Ждем загрузки GLTFLoader если еще не загружен
-    const hasGLTFLoader = (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') || 
-                          typeof window.GLTFLoader !== 'undefined';
+    // Проверяем оба варианта: THREE.GLTFLoader и window.GLTFLoader
+    // Используем более надежную проверку
+    const checkGLTFLoader = () => {
+        return (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') || 
+               (typeof window.GLTFLoader !== 'undefined' && window.GLTFLoader !== null) ||
+               (typeof window['GLTFLoader'] !== 'undefined' && window['GLTFLoader'] !== null);
+    };
+    
+    const hasGLTFLoader = checkGLTFLoader();
+    
+    console.log('Проверка GLTFLoader в начале createCharacterModel:', {
+        hasGLTFLoader,
+        'THREE.GLTFLoader': typeof THREE?.GLTFLoader,
+        'window.GLTFLoader': typeof window.GLTFLoader,
+        'window["GLTFLoader"]': typeof window['GLTFLoader'],
+        'window.gltfLoaderLoaded': window.gltfLoaderLoaded,
+        'прямая проверка': window.GLTFLoader !== undefined,
+        'прямая проверка []': window['GLTFLoader'] !== undefined
+    });
     
     if (!hasGLTFLoader && !window.gltfLoaderLoaded) {
         console.log('Ожидание загрузки GLTFLoader...', {
@@ -318,7 +348,8 @@ async function createCharacterModel() {
             const checkInterval = setInterval(() => {
                 attempts++;
                 const hasLoader = (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') || 
-                                 typeof window.GLTFLoader !== 'undefined';
+                                 (typeof window.GLTFLoader !== 'undefined' && window.GLTFLoader !== null) ||
+                                 (typeof window['GLTFLoader'] !== 'undefined' && window['GLTFLoader'] !== null);
                 if (hasLoader) {
                     clearInterval(checkInterval);
                     console.log('✓ GLTFLoader загружен после ожидания!', {
@@ -342,25 +373,83 @@ async function createCharacterModel() {
     }
 
     // Проверка наличия GLTFLoader после ожидания (может быть в THREE.GLTFLoader или window.GLTFLoader)
+    // Дополнительная проверка, если gltfLoaderLoaded установлен, но LoaderClass еще не найден
+    if (window.gltfLoaderLoaded) {
+        // Даже если gltfLoaderLoaded установлен, даем время на установку window.GLTFLoader
+        let waitAttempts = 0;
+        while (typeof window.GLTFLoader === 'undefined' && waitAttempts < 10) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waitAttempts++;
+        }
+        if (waitAttempts > 0) {
+            console.log(`Ожидали установку window.GLTFLoader ${waitAttempts} раз(а)`);
+        }
+    }
+    
+    console.log('Проверка GLTFLoader перед загрузкой модели:', {
+        'THREE': typeof THREE,
+        'THREE.GLTFLoader': typeof THREE?.GLTFLoader,
+        'window.GLTFLoader': typeof window.GLTFLoader,
+        'window.gltfLoaderLoaded': window.gltfLoaderLoaded,
+        'прямая проверка window.GLTFLoader': window.GLTFLoader !== undefined
+    });
+    
     let LoaderClass = null;
+    
+    // Пробуем разные способы получения GLTFLoader
     if (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') {
         LoaderClass = THREE.GLTFLoader;
-    } else if (typeof window.GLTFLoader !== 'undefined') {
+        console.log('✓ Используем THREE.GLTFLoader');
+    } else if (typeof window.GLTFLoader !== 'undefined' && window.GLTFLoader !== null) {
         LoaderClass = window.GLTFLoader;
+        console.log('✓ Используем window.GLTFLoader');
+    } else {
+        // Прямой доступ к window.GLTFLoader через разные способы
+        try {
+            const directAccess1 = window['GLTFLoader'];
+            if (directAccess1 && typeof directAccess1 === 'function') {
+                LoaderClass = directAccess1;
+                console.log('✓ Используем window["GLTFLoader"] (прямой доступ через [])');
+            } else {
+                // Пробуем через eval (последний вариант)
+                try {
+                    const directAccess2 = eval('window.GLTFLoader');
+                    if (directAccess2 && typeof directAccess2 === 'function') {
+                        LoaderClass = directAccess2;
+                        console.log('✓ Используем window.GLTFLoader (через eval)');
+                    }
+                } catch (e2) {
+                    // Игнорируем
+                }
+            }
+        } catch (e) {
+            console.log('Ошибка прямого доступа:', e);
+        }
+        
+        if (!LoaderClass) {
+            console.log('Попытка прямого доступа к window.GLTFLoader:', window.GLTFLoader);
+            console.log('Все свойства window с GLTF:', Object.keys(window).filter(k => k.toLowerCase().includes('gltf')));
+            console.log('Проверка через in:', 'GLTFLoader' in window);
+            console.log('Проверка через hasOwnProperty:', window.hasOwnProperty('GLTFLoader'));
+        }
     }
     
     if (!LoaderClass) {
         console.warn('GLTFLoader не доступен, используем простую модель');
         console.log('Текущее состояние:', {
             THREE: typeof THREE,
-            'THREE.GLTFLoader': typeof THREE.GLTFLoader,
+            'THREE.GLTFLoader': typeof THREE?.GLTFLoader,
             'window.GLTFLoader': typeof window.GLTFLoader,
+            'window.GLTFLoader значение': window.GLTFLoader,
             threeLoaded: window.threeLoaded,
-            gltfLoaderLoaded: window.gltfLoaderLoaded
+            gltfLoaderLoaded: window.gltfLoaderLoaded,
+            'window объект': Object.keys(window).filter(k => k.includes('GLTF') || k.includes('three'))
         });
         createSimpleCharacter();
         return;
     }
+    
+    console.log('✓ GLTFLoader найден, загружаем модель snowman.glb');
 
     // Загружаем модель snowman.glb
     const loader = new LoaderClass();
@@ -1202,8 +1291,20 @@ function waitForThreeJS() {
     });
 }
 
+// Флаг для предотвращения двойного запуска
+let appStarted = false;
+
 // Ждем загрузки DOM и Three.js перед инициализацией
 async function startApp() {
+    if (appStarted) {
+        console.log('⚠ Приложение уже запущено, пропускаем повторный запуск');
+        return;
+    }
+    appStarted = true;
+    console.log('✓ Запуск приложения...');
+    console.log('✓ GLTFLoader доступен:', typeof window.GLTFLoader !== 'undefined');
+    console.log('✓ THREE доступен:', typeof THREE !== 'undefined');
+    
     if (document.readyState === 'loading') {
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
     }
