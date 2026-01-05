@@ -13,11 +13,9 @@ RUN npm install --only=production
 COPY server.js ./
 COPY public ./public
 
-# Копирование Three.js и GLTFLoader в public
+# Копирование GLTFLoader в public
+# Three.js загружается с CDN, так как модульная версия требует дополнительные файлы
 RUN mkdir -p /app/public/utils && \
-    if [ -f node_modules/three/build/three.module.min.js ]; then \
-        cp node_modules/three/build/three.module.min.js /app/public/three.min.js; \
-    fi && \
     if [ -f node_modules/three/examples/jsm/loaders/GLTFLoader.js ]; then \
         cp node_modules/three/examples/jsm/loaders/GLTFLoader.js /app/public/GLTFLoader.js; \
     fi && \

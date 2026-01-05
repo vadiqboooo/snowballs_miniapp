@@ -5,22 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Снежки - Игра</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Загружаем Three.js с CDN (надежнее, чем модульная версия) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script type="module">
-        // Загружаем Three.js и GLTFLoader как модули локально
+        // Загружаем GLTFLoader как модуль
         (async function() {
             try {
-                console.log('Начало загрузки Three.js...');
+                console.log('Начало загрузки GLTFLoader...');
                 
-                // Импортируем Three.js
-                const threeModule = await import('./three.min.js');
-                const THREE = threeModule.default || threeModule;
+                // Проверяем, что Three.js загружена
+                if (typeof THREE === 'undefined') {
+                    console.error('Three.js не загружена!');
+                    return;
+                }
                 
                 // Импортируем GLTFLoader
                 const gltfModule = await import('./GLTFLoader.js');
                 const GLTFLoader = gltfModule.GLTFLoader || gltfModule.default;
                 
                 // Делаем доступным глобально
-                window.THREE = THREE;
                 if (GLTFLoader) {
                     window.THREE.GLTFLoader = GLTFLoader;
                     window.GLTFLoader = GLTFLoader;
@@ -54,9 +57,11 @@
                     }, 5000);
                 }
             } catch (error) {
-                console.error('Ошибка загрузки модулей:', error);
+                console.error('Ошибка загрузки GLTFLoader:', error);
                 console.error('Детали ошибки:', error.message, error.stack);
-                alert('Ошибка загрузки Three.js. Проверьте консоль браузера для деталей.');
+                // Three.js все равно доступна, можно работать без GLTFLoader
+                window.threeLoaded = true;
+                if (window.startApp) window.startApp();
             }
         })();
     </script>

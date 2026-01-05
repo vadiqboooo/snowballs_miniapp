@@ -17,11 +17,14 @@ mkdir -p public/utils
 
 # Копирование файлов
 echo "Копирование Three.js..."
-if [ -f "node_modules/three/build/three.module.min.js" ]; then
+if [ -f "node_modules/three/build/three.min.js" ]; then
+    cp node_modules/three/build/three.min.js public/three.min.js
+    echo "✓ three.min.js скопирован (UMD версия)"
+elif [ -f "node_modules/three/build/three.module.min.js" ]; then
     cp node_modules/three/build/three.module.min.js public/three.min.js
-    echo "✓ three.min.js скопирован"
+    echo "✓ three.module.min.js скопирован (модульная версия)"
 else
-    echo "✗ Ошибка: three.module.min.js не найден"
+    echo "✗ Ошибка: three.min.js не найден"
     exit 1
 fi
 
