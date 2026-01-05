@@ -5,21 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Снежки - Игра</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Загружаем Three.js с CDN (надежнее, чем модульная версия) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Загружаем Three.js с CDN как модуль -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
     <script type="module">
-        // Загружаем GLTFLoader как модуль
+        // Загружаем Three.js как модуль с CDN
+        import * as THREE from 'three';
+        window.THREE = THREE;
+        console.log('Three.js загружена с CDN как модуль');
+    </script>
+    <script type="module">
+        // Загружаем GLTFLoader как модуль (он будет использовать import map для 'three')
         (async function() {
             try {
                 console.log('Начало загрузки GLTFLoader...');
                 
-                // Проверяем, что Three.js загружена
+                // Ждем загрузки Three.js
+                const waitForThree = () => {
+                    return new Promise((resolve) => {
+                        if (typeof THREE !== 'undefined') {
+                            resolve();
+                            return;
+                        }
+                        const check = setInterval(() => {
+                            if (typeof THREE !== 'undefined') {
+                                clearInterval(check);
+                                resolve();
+                            }
+                        }, 100);
+                        setTimeout(() => {
+                            clearInterval(check);
+                            resolve();
+                        }, 5000);
+                    });
+                };
+                
+                await waitForThree();
+                
                 if (typeof THREE === 'undefined') {
                     console.error('Three.js не загружена!');
+                    window.threeLoaded = true;
+                    if (window.startApp) window.startApp();
                     return;
                 }
                 
-                // Импортируем GLTFLoader
+                // Импортируем GLTFLoader (он будет использовать import map для 'three')
                 const gltfModule = await import('./GLTFLoader.js');
                 const GLTFLoader = gltfModule.GLTFLoader || gltfModule.default;
                 
@@ -30,7 +66,7 @@
                 }
                 window.threeLoaded = true;
                 
-                console.log('Three.js и GLTFLoader загружены локально', {
+                console.log('Three.js (CDN модуль) и GLTFLoader загружены', {
                     THREE: typeof THREE,
                     GLTFLoader: typeof GLTFLoader,
                     'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader
@@ -40,25 +76,20 @@
                 if (window.startApp) {
                     window.startApp();
                 } else {
-                    // Если startApp еще не определена, ждем
                     const checkStartApp = setInterval(() => {
                         if (window.startApp) {
                             clearInterval(checkStartApp);
                             window.startApp();
                         }
                     }, 100);
-                    
-                    // Таймаут на 5 секунд
                     setTimeout(() => {
                         clearInterval(checkStartApp);
-                        if (window.startApp) {
-                            window.startApp();
-                        }
+                        if (window.startApp) window.startApp();
                     }, 5000);
                 }
             } catch (error) {
                 console.error('Ошибка загрузки GLTFLoader:', error);
-                console.error('Детали ошибки:', error.message, error.stack);
+                console.error('Детали:', error.message, error.stack);
                 // Three.js все равно доступна, можно работать без GLTFLoader
                 window.threeLoaded = true;
                 if (window.startApp) window.startApp();
