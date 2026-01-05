@@ -61,9 +61,21 @@
                 
                 // Делаем доступным глобально
                 if (GLTFLoader) {
-                    window.THREE.GLTFLoader = GLTFLoader;
+                    // THREE может быть заморожен, используем Object.defineProperty или просто window
+                    try {
+                        // Пробуем добавить через defineProperty
+                        Object.defineProperty(window.THREE, 'GLTFLoader', {
+                            value: GLTFLoader,
+                            writable: true,
+                            configurable: true
+                        });
+                        console.log('GLTFLoader установлен в THREE.GLTFLoader через defineProperty');
+                    } catch (e) {
+                        // Если не получилось, сохраняем отдельно
+                        console.warn('Не удалось добавить GLTFLoader в THREE, используем window.GLTFLoader');
+                    }
                     window.GLTFLoader = GLTFLoader;
-                    console.log('GLTFLoader установлен в THREE.GLTFLoader');
+                    console.log('GLTFLoader установлен в window.GLTFLoader');
                 } else {
                     console.warn('GLTFLoader не найден в модуле');
                 }

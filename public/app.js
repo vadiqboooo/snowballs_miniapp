@@ -300,7 +300,10 @@ async function createCharacterModel() {
     }
 
     // Ждем загрузки GLTFLoader если еще не загружен
-    if (typeof THREE.GLTFLoader === 'undefined' && !window.gltfLoaderLoaded) {
+    const hasGLTFLoader = (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') || 
+                          typeof window.GLTFLoader !== 'undefined';
+    
+    if (!hasGLTFLoader && !window.gltfLoaderLoaded) {
         console.log('Ожидание загрузки GLTFLoader...', {
             THREE: typeof THREE,
             'THREE.GLTFLoader': typeof THREE.GLTFLoader,
@@ -313,15 +316,11 @@ async function createCharacterModel() {
         await new Promise((resolve) => {
             const checkInterval = setInterval(() => {
                 attempts++;
-                if (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') {
+                const hasLoader = (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') || 
+                                 typeof window.GLTFLoader !== 'undefined';
+                if (hasLoader) {
                     clearInterval(checkInterval);
                     console.log('GLTFLoader загружен после ожидания!');
-                    resolve();
-                } else if (window.gltfLoaderLoaded && typeof window.GLTFLoader !== 'undefined') {
-                    // Пробуем установить из window.GLTFLoader
-                    window.THREE.GLTFLoader = window.GLTFLoader;
-                    clearInterval(checkInterval);
-                    console.log('GLTFLoader установлен из window.GLTFLoader');
                     resolve();
                 } else if (attempts >= maxAttempts) {
                     clearInterval(checkInterval);
@@ -332,21 +331,29 @@ async function createCharacterModel() {
         });
     }
 
-    // Проверка наличия GLTFLoader после ожидания
-    if (typeof THREE.GLTFLoader === 'undefined') {
+    // Проверка наличия GLTFLoader после ожидания (может быть в THREE.GLTFLoader или window.GLTFLoader)
+    let LoaderClass = null;
+    if (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') {
+        LoaderClass = THREE.GLTFLoader;
+    } else if (typeof window.GLTFLoader !== 'undefined') {
+        LoaderClass = window.GLTFLoader;
+    }
+    
+    if (!LoaderClass) {
         console.warn('GLTFLoader не доступен, используем простую модель');
         console.log('Текущее состояние:', {
             THREE: typeof THREE,
             'THREE.GLTFLoader': typeof THREE.GLTFLoader,
             'window.GLTFLoader': typeof window.GLTFLoader,
-            threeLoaded: window.threeLoaded
+            threeLoaded: window.threeLoaded,
+            gltfLoaderLoaded: window.gltfLoaderLoaded
         });
         createSimpleCharacter();
         return;
     }
 
     // Загружаем модель snowman.glb
-    const loader = new THREE.GLTFLoader();
+    const loader = new LoaderClass();
     const modelPath = `${API_URL}/skins/snowman.glb`;
     
     console.log('Загрузка модели персонажа:', modelPath);
