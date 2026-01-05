@@ -108,17 +108,21 @@
                 window.threeLoaded = true;
                 window.gltfLoaderLoaded = true; // Дополнительный флаг
                 
+                // Устанавливаем флаг готовности всех библиотек
+                window.threeAndLoadersReady = true;
+                
                 console.log('=== Three.js и GLTFLoader загружены ===', {
                     THREE: typeof THREE,
                     GLTFLoader: typeof GLTFLoader,
                     'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader,
                     'window.GLTFLoader': typeof window.GLTFLoader,
-                    'window.gltfLoaderLoaded': window.gltfLoaderLoaded
+                    'window.gltfLoaderLoaded': window.gltfLoaderLoaded,
+                    'window.threeAndLoadersReady': window.threeAndLoadersReady
                 });
                 
-                console.log('Запуск приложения сразу после загрузки GLTFLoader...');
+                console.log('Библиотеки готовы, запуск приложения...');
                 
-                // Запускаем приложение сразу после загрузки GLTFLoader
+                // Запускаем приложение после загрузки всех библиотек
                 // Ждем только определения функции startApp
                 if (window.startApp) {
                     window.startApp();

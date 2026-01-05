@@ -1260,67 +1260,69 @@ async function submitTaskAnswerById(taskId, answer) {
 }
 
 // Запуск приложения
+
 // Ожидание загрузки Three.js и DOM
 function waitForThreeJS() {
     return new Promise((resolve) => {
-        // Проверяем флаг загрузки или наличие THREE
-        if (window.threeLoaded || (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined')) {
+        // Проверяем флаг готовности всех библиотек
+        if (window.threeAndLoadersReady) {
+            console.log('✓ Three.js и загрузчики уже готовы');
             resolve();
             return;
         }
         
+        console.log('Ожидание загрузки Three.js и загрузчиков...');
+        
         // Проверяем каждые 100мс
         const checkInterval = setInterval(() => {
-            if (window.threeLoaded || (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined')) {
+            if (window.threeAndLoadersReady) {
                 clearInterval(checkInterval);
+                console.log('✓ Three.js и загрузчики загружены');
                 resolve();
             }
         }, 100);
         
-        // Таймаут через 5 секунд
+        // Таймаут через 10 секунд
         setTimeout(() => {
             clearInterval(checkInterval);
             if (typeof THREE === 'undefined') {
-                console.error('Three.js не загрузилась за 5 секунд');
+                console.error('Three.js не загрузилась за 10 секунд');
                 alert('Ошибка: библиотека Three.js не загрузилась. Пожалуйста, проверьте подключение к интернету и обновите страницу.');
-            } else if (typeof THREE.GLTFLoader === 'undefined') {
-                console.warn('GLTFLoader не загрузился, будет использована простая модель');
+            } else {
+                console.warn('Загрузка заняла более 10 секунд, продолжаем работу');
             }
             resolve();
-        }, 5000);
+        }, 10000);
     });
 }
 
-// Флаг для предотвращения двойного запуска
-let appStarted = false;
-
 // Ждем загрузки DOM и Three.js перед инициализацией
 async function startApp() {
-    if (appStarted) {
-        console.log('⚠ Приложение уже запущено, пропускаем повторный запуск');
-        return;
-    }
-    appStarted = true;
-    console.log('✓ Запуск приложения...');
-    console.log('✓ GLTFLoader доступен:', typeof window.GLTFLoader !== 'undefined');
-    console.log('✓ THREE доступен:', typeof THREE !== 'undefined');
+    console.log('startApp() вызван, проверка готовности...');
     
     if (document.readyState === 'loading') {
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
     }
     
     await waitForThreeJS();
+    
+    console.log('Финальная проверка перед инициализацией:', {
+        THREE: typeof THREE,
+        'window.GLTFLoader': typeof window.GLTFLoader,
+        'THREE.GLTFLoader': typeof THREE?.GLTFLoader
+    });
+    
     init();
 }
 
 // Делаем доступным глобально для модульного скрипта
 window.startApp = startApp;
 
-// Если модули уже загружены, запускаем сразу
-if (window.threeLoaded) {
+// Запускаем только если библиотеки уже готовы, иначе ждем вызова из index.html
+if (window.threeAndLoadersReady) {
+    console.log('Библиотеки готовы, запуск приложения');
     startApp();
 } else {
-    // Ждем загрузки модулей
-    startApp();
+    console.log('Ожидание загрузки библиотек из index.html...');
 }
 
