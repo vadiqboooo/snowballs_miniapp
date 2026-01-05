@@ -271,22 +271,14 @@ function createCharacterModel() {
     }
 
     // Проверка наличия GLTFLoader
-    let LoaderClass;
-    if (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') {
-        LoaderClass = THREE.GLTFLoader;
-    } else if (typeof GLTFLoader !== 'undefined') {
-        LoaderClass = GLTFLoader;
-    } else {
-        console.warn('GLTFLoader не загружен, используем простую модель');
-        console.log('THREE:', typeof THREE);
-        console.log('THREE.GLTFLoader:', typeof THREE?.GLTFLoader);
-        console.log('GLTFLoader:', typeof GLTFLoader);
+    if (typeof THREE === 'undefined' || typeof THREE.GLTFLoader === 'undefined') {
+        console.warn('GLTFLoader не доступен, используем простую модель');
         createSimpleCharacter();
         return;
     }
 
     // Загружаем модель snowman.glb
-    const loader = new LoaderClass();
+    const loader = new THREE.GLTFLoader();
     const modelPath = `${API_URL}/skins/snowman.glb`;
     
     console.log('Загрузка модели персонажа:', modelPath);
