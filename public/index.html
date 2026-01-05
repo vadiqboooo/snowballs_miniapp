@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Снежки - Игра</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Экран регистрации -->
+    <div id="registration-screen" class="screen hidden">
+        <div class="container">
+            <h1>Добро пожаловать!</h1>
+            <p>Заполните данные для регистрации</p>
+            
+            <form id="registration-form">
+                <div class="form-group">
+                    <label for="first-name">Имя:</label>
+                    <input type="text" id="first-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="last-name">Фамилия:</label>
+                    <input type="text" id="last-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="school-number">Номер школы:</label>
+                    <input type="number" id="school-number" required min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="class-number">Класс:</label>
+                    <input type="number" id="class-number" required min="1" max="11">
+                </div>
+                
+                <div class="form-group">
+                    <label>Предметы:</label>
+                    <div class="subjects-grid">
+                        <label><input type="checkbox" value="math"> Математика</label>
+                        <label><input type="checkbox" value="physics"> Физика</label>
+                        <label><input type="checkbox" value="chemistry"> Химия</label>
+                        <label><input type="checkbox" value="biology"> Биология</label>
+                        <label><input type="checkbox" value="history"> История</label>
+                        <label><input type="checkbox" value="literature"> Литература</label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Начать игру</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Экран игры -->
+    <div id="game-screen" class="screen hidden">
+        <div class="game-container">
+            <!-- Верхняя панель с информацией -->
+            <div class="top-bar">
+                <div class="player-info">
+                    <div class="stat">
+                        <span class="stat-label">❄️ Снежки:</span>
+                        <span id="snowballs-count">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">❤️ Жизни:</span>
+                        <span id="lives-count">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3D персонаж -->
+            <div id="character-container"></div>
+
+            <!-- Кнопки действий -->
+            <div class="actions">
+                <button id="throw-snowball-btn" class="btn btn-primary">Кинуть снежок</button>
+                <button id="active-snowballs-btn" class="btn btn-secondary">Активные снежки</button>
+                <button id="tasks-btn" class="btn btn-secondary">Задачи</button>
+                <button id="skins-btn" class="btn btn-secondary">Скины</button>
+            </div>
+
+            <!-- Модальное окно для выбора игрока -->
+            <div id="player-select-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h2>Выберите игрока</h2>
+                    <div id="players-list"></div>
+                    <button class="btn btn-secondary" onclick="closePlayerSelectModal()">Отмена</button>
+                </div>
+            </div>
+
+            <!-- Модальное окно для активных снежков -->
+            <div id="active-snowballs-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h2>Активные снежки</h2>
+                    <div id="active-snowballs-list"></div>
+                    <button class="btn btn-secondary" onclick="closeActiveSnowballsModal()">Закрыть</button>
+                </div>
+            </div>
+
+            <!-- Модальное окно для задач -->
+            <div id="tasks-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h2>Задачи</h2>
+                    <div id="tasks-list"></div>
+                    <button class="btn btn-secondary" onclick="closeTasksModal()">Закрыть</button>
+                </div>
+            </div>
+
+            <!-- Модальное окно для решения задачи -->
+            <div id="task-solve-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h2>Решить задачу</h2>
+                    <div id="task-question"></div>
+                    <input type="text" id="task-answer" placeholder="Ваш ответ">
+                    <button class="btn btn-primary" onclick="submitTaskAnswer()">Отправить</button>
+                    <button class="btn btn-secondary" onclick="closeTaskSolveModal()">Отмена</button>
+                </div>
+            </div>
+
+            <!-- Модальное окно для скинов -->
+            <div id="skins-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h2>Скины персонажа</h2>
+                    <div id="skins-tabs">
+                        <button class="skin-tab active" data-type="hat">Шапка</button>
+                        <button class="skin-tab" data-type="glasses">Очки</button>
+                        <button class="skin-tab" data-type="scarf">Шарф</button>
+                        <button class="skin-tab" data-type="shirt">Кофта</button>
+                        <button class="skin-tab" data-type="pants">Штаны</button>
+                    </div>
+                    <div id="skins-list"></div>
+                    <button class="btn btn-secondary" onclick="closeSkinsModal()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

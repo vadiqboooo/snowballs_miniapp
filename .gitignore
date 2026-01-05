@@ -1,0 +1,14 @@
+node_modules/
+.env
+snowball.db
+.DS_Store
+*.log
+
+# Docker
+data/
+nginx/ssl/
+*.pem
+*.key
+*.crt
+
+
