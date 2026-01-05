@@ -8,24 +8,23 @@
     <script type="importmap">
     {
         "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            "three": "./three.min.js",
+            "three/addons/": "./"
         }
     }
     </script>
     <script type="module">
+        // Загружаем Three.js и GLTFLoader как модули локально
         import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { GLTFLoader } from './GLTFLoader.js';
         
         // Делаем доступным глобально
         window.THREE = THREE;
         window.THREE.GLTFLoader = GLTFLoader;
         window.GLTFLoader = GLTFLoader;
-        
-        console.log('Three.js и GLTFLoader загружены');
-        
-        // Устанавливаем флаг загрузки
         window.threeLoaded = true;
+        
+        console.log('Three.js и GLTFLoader загружены локально');
         
         // Запускаем приложение после загрузки
         if (document.readyState === 'loading') {
