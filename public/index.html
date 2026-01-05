@@ -63,8 +63,12 @@
                 if (GLTFLoader) {
                     window.THREE.GLTFLoader = GLTFLoader;
                     window.GLTFLoader = GLTFLoader;
+                    console.log('GLTFLoader установлен в THREE.GLTFLoader');
+                } else {
+                    console.warn('GLTFLoader не найден в модуле');
                 }
                 window.threeLoaded = true;
+                window.gltfLoaderLoaded = true; // Дополнительный флаг
                 
                 console.log('Three.js (CDN модуль) и GLTFLoader загружены', {
                     THREE: typeof THREE,
