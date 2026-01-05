@@ -13,8 +13,7 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 
 // Инициализация базы данных
-const DB_PATH = process.env.DB_PATH || './snowball.db';
-const db = new sqlite3.Database(DB_PATH);
+const db = new sqlite3.Database('./snowball.db');
 
 // Инициализация Telegram бота
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });

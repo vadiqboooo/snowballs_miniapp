@@ -86,17 +86,4 @@ snowball_miniapp/
 - Если не решил задачу - теряет 1 жизнь
 - Снежки можно получить, решив задачу
 
-## Развертывание
-
-### Docker на Ubuntu сервере
-
-Для развертывания на Ubuntu сервере с Docker и Let's Encrypt:
-- [DOCKER_SETUP_UBUNTU.md](DOCKER_SETUP_UBUNTU.md) - подробная инструкция
-- [QUICK_START_UBUNTU.md](QUICK_START_UBUNTU.md) - быстрый старт
-
-### Docker на Windows (локально)
-
-Для локального развертывания на Windows:
-- [DOCKER_SETUP.md](DOCKER_SETUP.md) - инструкция
-- [QUICK_START.md](QUICK_START.md) - быстрый старт
 
