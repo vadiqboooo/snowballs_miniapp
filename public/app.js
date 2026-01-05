@@ -215,6 +215,12 @@ async function loadPlayerData() {
 
 // Инициализация 3D персонажа
 function init3DCharacter() {
+    // Проверка наличия Three.js
+    if (typeof THREE === 'undefined') {
+        console.error('Three.js не загружена! Проверьте подключение библиотеки в HTML.');
+        alert('Ошибка: библиотека Three.js не загружена. Пожалуйста, обновите страницу.');
+        return;
+    }
     const container = document.getElementById('character-container');
     const width = container.clientWidth;
     const height = container.clientHeight;
@@ -1021,10 +1027,43 @@ async function submitTaskAnswerById(taskId, answer) {
 }
 
 // Запуск приложения
-// Ждем загрузки DOM перед инициализацией
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
+// Ожидание загрузки Three.js и DOM
+function waitForThreeJS() {
+    return new Promise((resolve) => {
+        if (typeof THREE !== 'undefined') {
+            resolve();
+            return;
+        }
+        
+        // Проверяем каждые 100мс
+        const checkInterval = setInterval(() => {
+            if (typeof THREE !== 'undefined') {
+                clearInterval(checkInterval);
+                resolve();
+            }
+        }, 100);
+        
+        // Таймаут через 5 секунд
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            if (typeof THREE === 'undefined') {
+                console.error('Three.js не загрузилась за 5 секунд');
+                alert('Ошибка: библиотека Three.js не загрузилась. Пожалуйста, проверьте подключение к интернету и обновите страницу.');
+            }
+            resolve();
+        }, 5000);
+    });
+}
+
+// Ждем загрузки DOM и Three.js перед инициализацией
+async function startApp() {
+    if (document.readyState === 'loading') {
+        await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+    }
+    
+    await waitForThreeJS();
     init();
 }
+
+startApp();
 
