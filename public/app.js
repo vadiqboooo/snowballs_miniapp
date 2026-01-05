@@ -267,8 +267,75 @@ function createCharacterModel() {
     // Удаляем старую модель если есть
     if (characterModel) {
         characterScene.remove(characterModel);
+        characterModel = null;
     }
 
+    // Проверка наличия GLTFLoader
+    let LoaderClass;
+    if (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') {
+        LoaderClass = THREE.GLTFLoader;
+    } else if (typeof GLTFLoader !== 'undefined') {
+        LoaderClass = GLTFLoader;
+    } else {
+        console.warn('GLTFLoader не загружен, используем простую модель');
+        console.log('THREE:', typeof THREE);
+        console.log('THREE.GLTFLoader:', typeof THREE?.GLTFLoader);
+        console.log('GLTFLoader:', typeof GLTFLoader);
+        createSimpleCharacter();
+        return;
+    }
+
+    // Загружаем модель snowman.glb
+    const loader = new LoaderClass();
+    const modelPath = `${API_URL}/skins/snowman.glb`;
+    
+    console.log('Загрузка модели персонажа:', modelPath);
+    
+    loader.load(
+        modelPath,
+        // onLoad
+        (gltf) => {
+            console.log('Модель загружена успешно:', gltf);
+            
+            characterModel = gltf.scene;
+            
+            // Масштабируем модель если нужно
+            const box = new THREE.Box3().setFromObject(characterModel);
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 2 / maxDim; // Делаем модель высотой примерно 2 единицы
+            characterModel.scale.multiplyScalar(scale);
+            
+            // Центрируем модель
+            box.setFromObject(characterModel);
+            const center = box.getCenter(new THREE.Vector3());
+            characterModel.position.sub(center);
+            characterModel.position.y = -box.min.y; // Ставим на землю
+            
+            characterScene.add(characterModel);
+            
+            // Загружаем скины если есть
+            if (currentPlayer && currentPlayer.skins) {
+                loadCharacterSkins(currentPlayer.skins);
+            }
+            
+            console.log('Персонаж добавлен в сцену');
+        },
+        // onProgress
+        (progress) => {
+            console.log('Прогресс загрузки:', (progress.loaded / progress.total * 100) + '%');
+        },
+        // onError
+        (error) => {
+            console.error('Ошибка загрузки модели:', error);
+            console.log('Используем простую модель вместо GLB');
+            createSimpleCharacter();
+        }
+    );
+}
+
+// Создание простой модели (fallback)
+function createSimpleCharacter() {
     const group = new THREE.Group();
 
     // Тело (цилиндр)
