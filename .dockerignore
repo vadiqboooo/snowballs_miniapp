@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+data
+*.db
+*.db-journal
+README.md
+SETUP.md
+SKINS.md
+GET_SSL_CERTIFICATE.md
+get-ssl-certificate.sh
+.DS_Store
+

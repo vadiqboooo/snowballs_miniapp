@@ -45,13 +45,32 @@ fi
 
 # Проверка порта 80
 echo "Проверка порта 80..."
-if ! netstat -tuln | grep -q ":80 "; then
-    echo "⚠ Порт 80 не слушается. Certbot может не работать."
+PORT_80_LISTENING=false
+if command -v ss &> /dev/null; then
+    if ss -tuln | grep -q ":80 "; then
+        PORT_80_LISTENING=true
+    fi
+elif command -v netstat &> /dev/null; then
+    if netstat -tuln | grep -q ":80 "; then
+        PORT_80_LISTENING=true
+    fi
+elif command -v lsof &> /dev/null; then
+    if lsof -i :80 &> /dev/null; then
+        PORT_80_LISTENING=true
+    fi
+fi
+
+if [ "$PORT_80_LISTENING" = true ]; then
+    echo "⚠ Внимание: Порт 80 уже занят. Certbot остановит процесс на этом порту."
+    echo "Убедитесь, что веб-сервер будет остановлен перед получением сертификата."
     read -p "Продолжить? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         exit 1
     fi
+else
+    echo "✓ Порт 80 свободен (это нормально для standalone режима)"
+    echo "Убедитесь, что порт 80 открыт в firewall: sudo ufw allow 80/tcp"
 fi
 
 # Остановка веб-серверов
