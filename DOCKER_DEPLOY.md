@@ -16,7 +16,7 @@
 cd ~/snowball_miniapp
 
 # Создайте файл .env с токеном бота
-echo "TELEGRAM_BOT_TOKEN=your_bot_token_here" > .env
+echo "TELEGRAM_BOT_TOKEN=7632579233:AAH8CWd4NMQ9In_vDhoIBB9dGDB_YQLXPLo" > .env
 
 # Создайте директорию для данных
 mkdir -p data

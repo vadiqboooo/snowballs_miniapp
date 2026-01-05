@@ -8,9 +8,20 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// CORS настройка
+app.use(cors({
+  origin: true, // Разрешить все источники
+  credentials: true
+}));
+
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+// Логирование запросов
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
 // Инициализация базы данных
 const DB_PATH = process.env.DB_PATH || './snowball.db';
@@ -72,6 +83,11 @@ db.serialize(() => {
   )`);
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Middleware для проверки Telegram WebApp данных
 function verifyTelegramWebApp(req, res, next) {
   // В продакшене здесь должна быть проверка подписи от Telegram
@@ -83,16 +99,25 @@ function verifyTelegramWebApp(req, res, next) {
 app.post('/api/player/init', verifyTelegramWebApp, (req, res) => {
   const { telegram_id, telegram_username, telegram_first_name } = req.body;
   
+  if (!telegram_id) {
+    return res.status(400).json({ error: 'telegram_id обязателен' });
+  }
+  
+  console.log('Инициализация игрока:', { telegram_id, telegram_username, telegram_first_name });
+  
   db.get('SELECT * FROM players WHERE telegram_id = ?', [telegram_id], (err, player) => {
     if (err) {
+      console.error('Ошибка БД при инициализации игрока:', err);
       return res.status(500).json({ error: err.message });
     }
     
     if (player) {
+      console.log('Игрок найден:', player.id);
       return res.json({ player, isNew: false });
     }
     
     // Новый игрок - нужно заполнить данные
+    console.log('Новый игрок, требуется регистрация');
     res.json({ player: null, isNew: true });
   });
 });

@@ -31,18 +31,28 @@ let rotationAngle = 0;
 
 // Инициализация приложения
 async function init() {
+    console.log('=== Начало инициализации приложения ===');
+    console.log('API_URL:', API_URL);
+    console.log('Telegram WebApp доступен:', !!tg);
+    
     const initData = tg.initDataUnsafe;
     const telegramId = initData.user?.id;
     const telegramUsername = initData.user?.username || '';
     const telegramFirstName = initData.user?.first_name || '';
 
+    console.log('Данные Telegram:', { telegramId, telegramUsername, telegramFirstName });
+
     if (!telegramId) {
-        alert('Ошибка: не удалось получить данные Telegram');
+        const errorMsg = 'Ошибка: не удалось получить данные Telegram. Проверьте, что приложение открыто через Telegram.';
+        console.error(errorMsg);
+        alert(errorMsg);
         return;
     }
 
     // Проверяем, существует ли игрок
     try {
+        console.log('Инициализация игрока...', { telegramId, API_URL });
+        
         const response = await fetch(`${API_URL}/api/player/init`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -53,7 +63,46 @@ async function init() {
             })
         });
 
-        const data = await response.json();
+        console.log('Ответ сервера:', response.status, response.statusText);
+
+        // Читаем ответ один раз
+        const responseText = await response.text();
+        console.log('Ответ сервера (текст):', responseText);
+
+        if (!response.ok) {
+            console.error('Ошибка сервера:', response.status, responseText);
+            let errorMessage = `Ошибка сервера: ${response.status} ${response.statusText}`;
+            try {
+                const errorData = JSON.parse(responseText);
+                if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (e) {
+                // Если не JSON, используем текст как есть
+                if (responseText) {
+                    errorMessage += `. ${responseText}`;
+                }
+            }
+            throw new Error(errorMessage);
+        }
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Ошибка парсинга JSON:', parseError, 'Текст ответа:', responseText);
+            throw new Error('Сервер вернул некорректный ответ. Проверьте, что сервер запущен и доступен.');
+        }
+        
+        console.log('Данные игрока:', data);
+
+        if (!data) {
+            throw new Error('Сервер вернул пустой ответ');
+        }
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
 
         if (data.isNew) {
             // Показываем экран регистрации
@@ -66,7 +115,8 @@ async function init() {
         }
     } catch (error) {
         console.error('Error initializing:', error);
-        alert('Ошибка при инициализации');
+        const errorMessage = error.message || 'Неизвестная ошибка при инициализации';
+        alert(`Ошибка при инициализации: ${errorMessage}\n\nПроверьте:\n1. Сервер запущен\n2. Правильный URL: ${API_URL}\n3. Консоль браузера для деталей`);
     }
 }
 
