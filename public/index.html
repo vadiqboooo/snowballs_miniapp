@@ -18,7 +18,11 @@
         // Загружаем Three.js как модуль с CDN
         import * as THREE from 'three';
         window.THREE = THREE;
-        console.log('Three.js загружена с CDN как модуль');
+        window.threeModuleLoaded = true;
+        console.log('Three.js загружена с CDN как модуль', {
+            THREE: typeof THREE,
+            hasGLTFLoader: typeof THREE.GLTFLoader
+        });
     </script>
     <script type="module">
         // Загружаем GLTFLoader как модуль (он будет использовать import map для 'three')
@@ -56,11 +60,17 @@
                 }
                 
                 // Импортируем GLTFLoader (он будет использовать import map для 'three')
+                console.log('Импорт GLTFLoader.js...');
                 const gltfModule = await import('./GLTFLoader.js');
-                const GLTFLoader = gltfModule.GLTFLoader || gltfModule.default;
+                console.log('Модуль GLTFLoader загружен:', gltfModule);
+                console.log('Ключи модуля:', Object.keys(gltfModule));
+                
+                const GLTFLoader = gltfModule.GLTFLoader || gltfModule.default || gltfModule;
                 
                 // Делаем доступным глобально
-                if (GLTFLoader) {
+                if (GLTFLoader && typeof GLTFLoader === 'function') {
+                    console.log('GLTFLoader получен из модуля:', typeof GLTFLoader, GLTFLoader.name || 'GLTFLoader');
+                    
                     // THREE может быть заморожен, используем Object.defineProperty или просто window
                     try {
                         // Пробуем добавить через defineProperty
@@ -69,40 +79,56 @@
                             writable: true,
                             configurable: true
                         });
-                        console.log('GLTFLoader установлен в THREE.GLTFLoader через defineProperty');
+                        console.log('✓ GLTFLoader установлен в THREE.GLTFLoader через defineProperty');
                     } catch (e) {
                         // Если не получилось, сохраняем отдельно
-                        console.warn('Не удалось добавить GLTFLoader в THREE, используем window.GLTFLoader');
+                        console.warn('Не удалось добавить GLTFLoader в THREE:', e.message);
                     }
+                    
+                    // Всегда сохраняем в window
                     window.GLTFLoader = GLTFLoader;
-                    console.log('GLTFLoader установлен в window.GLTFLoader');
+                    console.log('✓ GLTFLoader установлен в window.GLTFLoader');
+                    console.log('Проверка:', {
+                        'window.GLTFLoader': typeof window.GLTFLoader,
+                        'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader
+                    });
                 } else {
-                    console.warn('GLTFLoader не найден в модуле');
+                    console.error('GLTFLoader не найден в модуле!', gltfModule);
                 }
                 window.threeLoaded = true;
                 window.gltfLoaderLoaded = true; // Дополнительный флаг
                 
-                console.log('Three.js (CDN модуль) и GLTFLoader загружены', {
+                console.log('=== Three.js и GLTFLoader загружены ===', {
                     THREE: typeof THREE,
                     GLTFLoader: typeof GLTFLoader,
-                    'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader
+                    'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader,
+                    'window.GLTFLoader': typeof window.GLTFLoader,
+                    'window.gltfLoaderLoaded': window.gltfLoaderLoaded
                 });
                 
-                // Запускаем приложение после загрузки
-                if (window.startApp) {
-                    window.startApp();
-                } else {
-                    const checkStartApp = setInterval(() => {
-                        if (window.startApp) {
+                // Небольшая задержка перед запуском приложения, чтобы убедиться, что все установлено
+                setTimeout(() => {
+                    console.log('Запуск приложения...', {
+                        'window.GLTFLoader': typeof window.GLTFLoader,
+                        'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader
+                    });
+                    
+                    // Запускаем приложение после загрузки
+                    if (window.startApp) {
+                        window.startApp();
+                    } else {
+                        const checkStartApp = setInterval(() => {
+                            if (window.startApp) {
+                                clearInterval(checkStartApp);
+                                window.startApp();
+                            }
+                        }, 100);
+                        setTimeout(() => {
                             clearInterval(checkStartApp);
-                            window.startApp();
-                        }
-                    }, 100);
-                    setTimeout(() => {
-                        clearInterval(checkStartApp);
-                        if (window.startApp) window.startApp();
-                    }, 5000);
-                }
+                            if (window.startApp) window.startApp();
+                        }, 5000);
+                    }
+                }, 100);
             } catch (error) {
                 console.error('Ошибка загрузки GLTFLoader:', error);
                 console.error('Детали:', error.message, error.stack);

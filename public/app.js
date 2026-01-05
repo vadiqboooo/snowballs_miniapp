@@ -308,7 +308,8 @@ async function createCharacterModel() {
             THREE: typeof THREE,
             'THREE.GLTFLoader': typeof THREE.GLTFLoader,
             'window.GLTFLoader': typeof window.GLTFLoader,
-            gltfLoaderLoaded: window.gltfLoaderLoaded
+            gltfLoaderLoaded: window.gltfLoaderLoaded,
+            threeModuleLoaded: window.threeModuleLoaded
         });
         let attempts = 0;
         const maxAttempts = 50; // 5 секунд
@@ -320,11 +321,20 @@ async function createCharacterModel() {
                                  typeof window.GLTFLoader !== 'undefined';
                 if (hasLoader) {
                     clearInterval(checkInterval);
-                    console.log('GLTFLoader загружен после ожидания!');
+                    console.log('✓ GLTFLoader загружен после ожидания!', {
+                        'THREE.GLTFLoader': typeof THREE.GLTFLoader,
+                        'window.GLTFLoader': typeof window.GLTFLoader
+                    });
                     resolve();
                 } else if (attempts >= maxAttempts) {
                     clearInterval(checkInterval);
                     console.warn('GLTFLoader не загрузился за 5 секунд, используем простую модель');
+                    console.log('Финальное состояние:', {
+                        THREE: typeof THREE,
+                        'THREE.GLTFLoader': typeof THREE.GLTFLoader,
+                        'window.GLTFLoader': typeof window.GLTFLoader,
+                        gltfLoaderLoaded: window.gltfLoaderLoaded
+                    });
                     resolve();
                 }
             }, 100);
