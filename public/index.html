@@ -24,6 +24,9 @@
         
         console.log('Three.js и GLTFLoader загружены');
         
+        // Устанавливаем флаг загрузки
+        window.threeLoaded = true;
+        
         // Запускаем приложение после загрузки
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {

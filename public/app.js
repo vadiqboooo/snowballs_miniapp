@@ -218,7 +218,15 @@ function init3DCharacter() {
     // Проверка наличия Three.js
     if (typeof THREE === 'undefined') {
         console.error('Three.js не загружена! Проверьте подключение библиотеки в HTML.');
-        alert('Ошибка: библиотека Three.js не загружена. Пожалуйста, обновите страницу.');
+        console.log('Ожидание загрузки Three.js...');
+        // Ждем еще немного
+        setTimeout(() => {
+            if (typeof THREE !== 'undefined') {
+                init3DCharacter();
+            } else {
+                alert('Ошибка: библиотека Three.js не загружена. Пожалуйста, обновите страницу.');
+            }
+        }, 1000);
         return;
     }
     const container = document.getElementById('character-container');
@@ -1089,14 +1097,15 @@ async function submitTaskAnswerById(taskId, answer) {
 // Ожидание загрузки Three.js и DOM
 function waitForThreeJS() {
     return new Promise((resolve) => {
-        if (typeof THREE !== 'undefined') {
+        // Проверяем флаг загрузки или наличие THREE
+        if (window.threeLoaded || (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined')) {
             resolve();
             return;
         }
         
         // Проверяем каждые 100мс
         const checkInterval = setInterval(() => {
-            if (typeof THREE !== 'undefined') {
+            if (window.threeLoaded || (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined')) {
                 clearInterval(checkInterval);
                 resolve();
             }
@@ -1108,6 +1117,8 @@ function waitForThreeJS() {
             if (typeof THREE === 'undefined') {
                 console.error('Three.js не загрузилась за 5 секунд');
                 alert('Ошибка: библиотека Three.js не загрузилась. Пожалуйста, проверьте подключение к интернету и обновите страницу.');
+            } else if (typeof THREE.GLTFLoader === 'undefined') {
+                console.warn('GLTFLoader не загрузился, будет использована простая модель');
             }
             resolve();
         }, 5000);
@@ -1124,5 +1135,14 @@ async function startApp() {
     init();
 }
 
-startApp();
+// Делаем доступным глобально для модульного скрипта
+window.startApp = startApp;
+
+// Если модули уже загружены, запускаем сразу
+if (window.threeLoaded) {
+    startApp();
+} else {
+    // Ждем загрузки модулей
+    startApp();
+}
 
