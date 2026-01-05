@@ -218,15 +218,26 @@ function init3DCharacter() {
     // Проверка наличия Three.js
     if (typeof THREE === 'undefined') {
         console.error('Three.js не загружена! Проверьте подключение библиотеки в HTML.');
+        console.log('Текущее состояние:', {
+            threeLoaded: window.threeLoaded,
+            THREE: typeof THREE,
+            GLTFLoader: typeof GLTFLoader
+        });
         console.log('Ожидание загрузки Three.js...');
         // Ждем еще немного
-        setTimeout(() => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 секунд
+        const checkInterval = setInterval(() => {
+            attempts++;
             if (typeof THREE !== 'undefined') {
+                clearInterval(checkInterval);
+                console.log('Three.js загружена, повторная инициализация');
                 init3DCharacter();
-            } else {
-                alert('Ошибка: библиотека Three.js не загружена. Пожалуйста, обновите страницу.');
+            } else if (attempts >= maxAttempts) {
+                clearInterval(checkInterval);
+                alert('Ошибка: библиотека Three.js не загружена. Пожалуйста, проверьте консоль браузера и обновите страницу.');
             }
-        }, 1000);
+        }, 100);
         return;
     }
     const container = document.getElementById('character-container');

@@ -5,35 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Снежки - Игра</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "./three.min.js",
-            "three/addons/": "./"
-        }
-    }
-    </script>
     <script type="module">
         // Загружаем Three.js и GLTFLoader как модули локально
-        import * as THREE from 'three';
-        import { GLTFLoader } from './GLTFLoader.js';
-        
-        // Делаем доступным глобально
-        window.THREE = THREE;
-        window.THREE.GLTFLoader = GLTFLoader;
-        window.GLTFLoader = GLTFLoader;
-        window.threeLoaded = true;
-        
-        console.log('Three.js и GLTFLoader загружены локально');
-        
-        // Запускаем приложение после загрузки
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                if (window.startApp) window.startApp();
-            });
-        } else {
-            if (window.startApp) window.startApp();
-        }
+        (async function() {
+            try {
+                console.log('Начало загрузки Three.js...');
+                
+                // Импортируем Three.js
+                const threeModule = await import('./three.min.js');
+                const THREE = threeModule.default || threeModule;
+                
+                // Импортируем GLTFLoader
+                const gltfModule = await import('./GLTFLoader.js');
+                const GLTFLoader = gltfModule.GLTFLoader || gltfModule.default;
+                
+                // Делаем доступным глобально
+                window.THREE = THREE;
+                if (GLTFLoader) {
+                    window.THREE.GLTFLoader = GLTFLoader;
+                    window.GLTFLoader = GLTFLoader;
+                }
+                window.threeLoaded = true;
+                
+                console.log('Three.js и GLTFLoader загружены локально', {
+                    THREE: typeof THREE,
+                    GLTFLoader: typeof GLTFLoader,
+                    'THREE.GLTFLoader': typeof window.THREE?.GLTFLoader
+                });
+                
+                // Запускаем приложение после загрузки
+                if (window.startApp) {
+                    window.startApp();
+                } else {
+                    // Если startApp еще не определена, ждем
+                    const checkStartApp = setInterval(() => {
+                        if (window.startApp) {
+                            clearInterval(checkStartApp);
+                            window.startApp();
+                        }
+                    }, 100);
+                    
+                    // Таймаут на 5 секунд
+                    setTimeout(() => {
+                        clearInterval(checkStartApp);
+                        if (window.startApp) {
+                            window.startApp();
+                        }
+                    }, 5000);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки модулей:', error);
+                console.error('Детали ошибки:', error.message, error.stack);
+                alert('Ошибка загрузки Three.js. Проверьте консоль браузера для деталей.');
+            }
+        })();
     </script>
     <link rel="stylesheet" href="styles.css">
 </head>
